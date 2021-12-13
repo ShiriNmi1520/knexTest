@@ -1,0 +1,8 @@
+{
+  "name": "knexTest",
+  "version": "1.0.0",
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "knex": "^0.95.14"
+  }
+}
