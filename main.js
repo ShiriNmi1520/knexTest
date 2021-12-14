@@ -14,11 +14,11 @@ const mockDataTestTable = require('./__MOCK__/mockDataTestTable.json');
 
 module.exports = {
   initDatabase: () => {
-    return knexConfig.schema.hasTable('testTable').then((testTableExist) => {
+    return knexConfig.schema.hasTable('testTable').then(async (testTableExist) => {
       if (!testTableExist) {
         console.log('creating testTable...');
         knexConfig.schema.createTable('testTable', (table) => {
-          table.increments('ID');
+          table.increments('ID').primary();
           table.string('description');
           table.timestamps();
         })
@@ -34,7 +34,7 @@ module.exports = {
         if (!paymentExist) {
           console.log('creating payment table...');
           knexConfig.schema.createTable('payment', (table) => {
-            table.increments('ID');
+            table.increments('ID').primary();
             table.integer('clientID').notNullable();
             table.float('price').notNullable();
             table.string('item').notNullable();
@@ -50,6 +50,8 @@ module.exports = {
           console.log('payment table already exists, skipping...');
         }
       })
+      await knexConfig.raw('CREATE VIEW paymentTotalIncome AS SELECT sum(`quantity` * `price`) AS totalIncome FROM payment');
+      console.log('created view paymentTotalIncome');
     })
       .finally(() => {
         knexConfig.destroy().then(() => {
@@ -70,9 +72,30 @@ module.exports = {
         })
       })
   },
+  calculateTotalIncome: () => {
+    knexConfig('payment').sum(knexConfig.raw('`price` * `quantity`')).then((data) => {
+      console.log(data);
+    })
+      .finally(() => {
+        knexConfig.destroy().then(() => {
+        })
+      })
+  },
+  topTenOrder: () => {
+    knexConfig('payment').select('clientID', 'price', 'quantity', knexConfig.raw('`price` * `quantity` as total')).orderBy(knexConfig.raw('`price` * `quantity`'), 'desc').limit(10)
+      .then((sortedData) => {
+        sortedData.map((value) => {
+          console.log(value);
+        })
+      })
+      .finally(() => {
+        knexConfig.destroy().then(() => {
+        });
+      })
+  }
 }
 
-module.exports.insertMockData();
+module.exports.topTenOrder();
 
 knexConfig.schema.hasTable('testTable').then((exist) => {
   if (exist) {
