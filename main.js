@@ -92,10 +92,25 @@ module.exports = {
         knexConfig.destroy().then(() => {
         });
       })
+  },
+  transactionTest: () => {
+    return knexConfig.transaction((trans) => {
+      const tableToSearch = ['testTable', 'payment'];
+      const query = tableToSearch.map((value) => {
+        knexConfig.schema.hasTable(value);
+      });
+      console.log(query);
+      Promise.all(query).then(() => {
+        trans.commit();
+      })
+        .catch(() => {
+          trans.rollback();
+        })
+    })
   }
 }
 
-module.exports.topTenOrder();
+module.exports.transactionTest();
 
 knexConfig.schema.hasTable('testTable').then((exist) => {
   if (exist) {
